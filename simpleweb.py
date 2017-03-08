@@ -1,4 +1,4 @@
-#/usr/bin/env python
+#!/usr/bin/env python
 #-*- coding: utf-8 -*-
 #vim: set fileencoding=utf8:
 """
@@ -6,9 +6,9 @@ Get Weather from weather underground
 Created 07/03/2017
 @author:joanpaucg
 """
-import sys
 import requests
 import json
+import argparse
 api_key=None
 class WeatherClient(object):
     """docstring for WeatherClient """
@@ -23,14 +23,30 @@ class WeatherClient(object):
     def __init__(self,api_key):
         super(WeatherClient,self).__init__()
         self.api_key=api_key
+
+    def almanac(self,location):
+        """
+        Accesses wunderground almanac information for the given location
+        """
+        url=WeatherClient.url_base + self.api_key +\
+        WeatherClient.url_service["almanac"] +\
+        location + ".json"
+        f=requests.get(url)
+        return json.loads(f.text)
+
     def hourly(self,location):
-        #baixar-se la pagina web
+        """
+        Accesses wunderground hourly information for the given location
+        """
         url=WeatherClient.url_base + self.api_key +\
         WeatherClient.url_service["hourly"] +\
         location + ".json"
         f=requests.get(url)
         return json.loads(f.text)
     def astronomy(self,location):
+        """
+        Accesses wunderground astronomy information for the given location
+        """
         url=WeatherClient.url_base + self.api_key +\
         WeatherClient.url_service["astronomy"] +\
         location + ".json"
@@ -38,6 +54,9 @@ class WeatherClient(object):
         return json.loads(f.text)
 
     def conditions(self,location):
+        """
+        Accesses wunderground conditions information for the given location
+        """
         url=WeatherClient.url_base + self.api_key +\
         WeatherClient.url_service["conditions"] +\
         location + ".json"
@@ -46,8 +65,10 @@ class WeatherClient(object):
 
 
 
-
 def print_hourly(hourly):
+    """
+    Prints an hourly received as a dict
+    """
     hourly_forecast=resultat["hourly_forecast"]
     print "Hourly"
     for hour in hourly_forecast:
@@ -60,6 +81,21 @@ def print_hourly(hourly):
         (hour["wx"],hour["temp"]["metric"],hour["humidity"],)
 
         print "/**************************************************************/\n"
+def print_almanac(almanac):
+    """
+    Prints an almanac received as a dict
+    """
+    print "Almanac"
+    print "  High Temperatures:"
+    print "    Average on this date", almanac['almanac']['temp_high']['normal']['C']
+    print "    Record on this date %s (%s) " % \
+        (almanac['almanac']['temp_high']['record']['C'],
+            almanac['almanac']['temp_high']['recordyear'])
+    print "  Low Temperatures:"
+    print "    Average on this date", almanac['almanac']['temp_low']['normal']['C']
+    print "    Record on this date %s (%s) " % \
+        (almanac['almanac']['temp_low']['record']['C'],
+         almanac['almanac']['temp_low']['recordyear'])
 def print_astronomy(astronomy):
     print "Astronomy"
     print "  Moon phase:"
@@ -110,24 +146,41 @@ def print_conditions(conditions):
 
 
 
-
-
-
-
-
 if __name__=='__main__':
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                                    description="", epilog="")
+    parser.add_argument('-al', '--almanac', action='store_true',
+                       help="Return High Temperatures and Low Temperatures")
+    parser.add_argument('-ho', '--hourly', action='store_true',
+                        help="Hourly Forecast")
+
+    parser.add_argument('-as', '--astronomy', action='store_true',
+                        help="Return the moon phase,sunrise and sunset times")
+
+    parser.add_argument('-c', '--conditions', action='store_true',
+                       help="Return Location, Date and Weahter parameters")
+    parser.add_argument('-k', '--key', type=str,
+                        help="key to use the api of weather ground")
+    opts=parser.parse_args()
     if not api_key:
         try:
-            api_key=sys.argv[1]
+            api_key=opts.key
         except IndexError:
             print "API Key must be in CLI option"
+    print "-al/almanac:",opts.almanac
+    print "-ho/--hourly:", opts.hourly
+    print "-as/--astronomy:", opts.astronomy
+    print "-c/--conditions:", opts.conditions
     wc=WeatherClient(api_key)
-    resultat=wc.hourly("Lleida")
-    print_hourly(resultat)
-    resultat=wc.astronomy("Lleida")
-    print_astronomy(resultat)
-    resultat=wc.conditions("Lleida")
-    print_conditions(resultat)
-
-
-    #print resultat
+    if opts.hourly:
+        resultat=wc.hourly("Lleida")
+        print_hourly(resultat)
+    if opts.astronomy:
+        resultat=wc.astronomy("Lleida")
+        print_astronomy(resultat)
+    if opts.conditions:
+        resultat=wc.conditions("Lleida")
+        print_conditions(resultat)
+    if opts.almanac:
+        resultat=wc.almanac("Lleida")
+        print_almanac(resultat)
