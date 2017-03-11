@@ -149,6 +149,8 @@ def print_conditions(conditions):
 if __name__=='__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                     description="", epilog="")
+    parser.add_argument('-k', '--key', type=str, required=True,
+                        help="key to use the api of weather ground")
     parser.add_argument('-al', '--almanac', action='store_true',
                        help="Return High Temperatures and Low Temperatures")
     parser.add_argument('-ho', '--hourly', action='store_true',
@@ -159,8 +161,7 @@ if __name__=='__main__':
 
     parser.add_argument('-c', '--conditions', action='store_true',
                        help="Return Location, Date and Weahter parameters")
-    parser.add_argument('-k', '--key', type=str,
-                        help="key to use the api of weather ground")
+
     opts=parser.parse_args()
     if not api_key:
         try:
